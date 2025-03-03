@@ -106,7 +106,7 @@ def process_form_data(df):
     # Create a new DataFrame from the list of dictionaries
     form_df_transformed = pd.DataFrame(form_df_list)
     display_columns = ['id', 'name', 'gender', 'job', 'email', 'phone', 'review','form']
-    display_columns = [col for col in display_columns if col in final_df.columns]
+    display_columns = [col for col in display_columns if col in df.columns]
     df = df[display_columns]
     # Merge form_df_transformed with the original df horizontally
     df_merged = pd.concat([df.drop(columns=['form']), form_df_transformed], axis=1)
