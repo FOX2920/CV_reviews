@@ -5,16 +5,16 @@ from bs4 import BeautifulSoup
 import datetime
 import os
 
-st.set_page_config(page_title="Candidate Review Collector", layout="wide")
+st.set_page_config(page_title="Công cụ thu thập đánh giá ứng viên", layout="wide")
 
-st.title("Candidate Review Collection Tool")
-st.markdown("Collect and analyze candidate reviews from Base API")
+st.title("Công cụ thu thập đánh giá ứng viên")
+st.markdown("Thu thập và phân tích đánh giá ứng viên từ Base API")
 
 # API Key input or use default
 api_key = os.getenv("BASE_API_KEY")
 
 def get_base_openings(api_key):
-    """Retrieve active job openings from Base API"""
+    """Truy xuất vị trí tuyển dụng đang hoạt động từ Base API"""
     url = "https://hiring.base.vn/publicapi/v2/opening/list"
 
     payload = {
@@ -27,31 +27,31 @@ def get_base_openings(api_key):
         data = response.json()
         openings = data.get('openings', [])
 
-        # Filter openings with status '10' (active)
+        # Lọc vị trí với trạng thái '10' (đang hoạt động)
         filtered_openings = [
             {"id": opening['id'], "name": opening['name']}
             for opening in openings
             if opening.get('status') == '10'
         ]
 
-        # Create DataFrame
+        # Tạo DataFrame
         df = pd.DataFrame(filtered_openings)
         return df
     else:
-        st.error(f"Error: {response.status_code} - {response.text}")
+        st.error(f"Lỗi: {response.status_code} - {response.text}")
         return pd.DataFrame()
 
 def extract_message(evaluations):
-    """Extract text content from HTML evaluations"""
+    """Trích xuất nội dung văn bản từ đánh giá HTML"""
     if isinstance(evaluations, list) and len(evaluations) > 0:
-        raw_html = evaluations[0].get('content', '')  # Get raw HTML from content
-        soup = BeautifulSoup(raw_html, "html.parser")  # Parse HTML
-        text = " ".join(soup.stripped_strings)  # Get all text content
+        raw_html = evaluations[0].get('content', '')  # Lấy HTML thô từ nội dung
+        soup = BeautifulSoup(raw_html, "html.parser")  # Phân tích HTML
+        text = " ".join(soup.stripped_strings)  # Lấy tất cả nội dung văn bản
         return text
-    return None  # Return None if no data
+    return None  # Trả về None nếu không có dữ liệu
 
 def get_candidates_for_opening(opening_id, api_key, start_date, end_date):
-    """Retrieve candidates for a specific job opening within date range"""
+    """Truy xuất ứng viên cho một vị trí tuyển dụng cụ thể trong khoảng thời gian"""
     url = "https://hiring.base.vn/publicapi/v2/candidate/list"
 
     payload = {
@@ -72,29 +72,29 @@ def get_candidates_for_opening(opening_id, api_key, start_date, end_date):
             candidate_data = data['candidates']
             df = pd.DataFrame(candidate_data)
 
-            # Add opening_id as a column for reference
+            # Thêm opening_id như một cột để tham chiếu
             df['opening_id'] = opening_id
 
-            # Extract review content
+            # Trích xuất nội dung đánh giá
             df['review'] = df['evaluations'].apply(extract_message)
 
             return df
         else:
-            st.info(f"No candidates found for opening ID: {opening_id}")
+            st.info(f"Không tìm thấy ứng viên nào cho vị trí ID: {opening_id}")
             return pd.DataFrame({'opening_id': [opening_id]})
     else:
-        st.error(f"Error for opening ID {opening_id}: {response.status_code}, {response.text}")
+        st.error(f"Lỗi cho vị trí ID {opening_id}: {response.status_code}, {response.text}")
         return pd.DataFrame()
 
 def process_form_data(df):
-    """Process form data to flatten the structure"""
+    """Xử lý dữ liệu biểu mẫu để làm phẳng cấu trúc"""
     if df.empty or 'form' not in df.columns:
         return df
     
-    # Extract form data
+    # Trích xuất dữ liệu biểu mẫu
     form_data_list = df['form']
     
-    # Convert each row in 'form' column to a dictionary
+    # Chuyển đổi mỗi hàng trong cột 'form' thành một từ điển
     form_df_list = []
     for form_data in form_data_list:
         if isinstance(form_data, list):
@@ -103,122 +103,121 @@ def process_form_data(df):
         else:
             form_df_list.append({})
     
-    # Create a new DataFrame from the list of dictionaries
+    # Tạo DataFrame mới từ danh sách các từ điển
     form_df_transformed = pd.DataFrame(form_df_list)
-    display_columns = ['id', 'name', 'gender', 'job', 'email', 'phone', 'review','form']
+    display_columns = ['id', 'name', 'gender', 'job', 'email', 'phone', 'review', 'form']
     display_columns = [col for col in display_columns if col in df.columns]
     df = df[display_columns]
-    # Merge form_df_transformed with the original df horizontally
+    # Kết hợp form_df_transformed với df ban đầu theo chiều ngang
     df_merged = pd.concat([df.drop(columns=['form']), form_df_transformed], axis=1)
     
     return df_merged
 
 def process_cvs_data(df):
-    """Process CVs data to extract the first CV if available"""
+    """Xử lý dữ liệu CV để trích xuất CV đầu tiên nếu có"""
     if df.empty or 'cvs' not in df.columns:
         return df
     
     df['cvs'] = df['cvs'].apply(lambda x: x[0] if isinstance(x, list) and len(x) > 0 else None)
     return df
 
-# Date selection
+# Lựa chọn ngày
 col1, col2 = st.columns(2)
 with col1:
-    start_date = st.date_input("Start Date", datetime.date.today() - datetime.timedelta(days=30))
+    start_date = st.date_input("Ngày bắt đầu", datetime.date.today() - datetime.timedelta(days=30))
 with col2:
-    end_date = st.date_input("End Date", datetime.date.today())
+    end_date = st.date_input("Ngày kết thúc", datetime.date.today())
 
-# Make sure end_date is not before start_date
+# Đảm bảo ngày kết thúc không trước ngày bắt đầu
 if start_date > end_date:
-    st.error("Error: End date must be after start date")
+    st.error("Lỗi: Ngày kết thúc phải sau ngày bắt đầu")
     st.stop()
 
-# Load job openings
-with st.spinner("Loading job openings..."):
+# Tải vị trí công việc
+with st.spinner("Đang tải vị trí công việc..."):
     openings_df = get_base_openings(api_key)
 
 if not openings_df.empty:
-    # Add "All" option at the beginning
-    job_options = ["All"] + openings_df['name'].tolist()
+    # Thêm tùy chọn "Tất cả" vào đầu
+    job_options = ["Tất cả"] + openings_df['name'].tolist()
     
-    # Job selection
-    selected_job = st.selectbox("Select Job", job_options)
+    # Lựa chọn công việc
+    selected_job = st.selectbox("Chọn vị trí công việc", job_options)
     
-    if st.button("Collect Data"):
+    if st.button("Thu thập dữ liệu"):
         all_candidates = []
         
-        with st.spinner("Collecting candidate data..."):
-            if selected_job == "All":
-                # Process all job openings
+        with st.spinner("Đang thu thập dữ liệu ứng viên..."):
+            if selected_job == "Tất cả":
+                # Xử lý tất cả vị trí công việc
                 progress_bar = st.progress(0)
                 for idx, (index, row) in enumerate(openings_df.iterrows()):
                     opening_id = row['id']
                     opening_name = row['name']
                     
-                    st.write(f"Retrieving candidates for: {opening_name}")
+                    st.write(f"Đang truy xuất ứng viên cho: {opening_name}")
                     candidates_df = get_candidates_for_opening(opening_id, api_key, start_date, end_date)
                     
                     if not candidates_df.empty and 'id' in candidates_df.columns:
                         candidates_df['job'] = opening_name
                         all_candidates.append(candidates_df)
                     
-                    # Update progress
+                    # Cập nhật tiến trình
                     progress_bar.progress((idx + 1) / len(openings_df))
             else:
-                # Process only the selected job
+                # Chỉ xử lý công việc đã chọn
                 selected_opening = openings_df[openings_df['name'] == selected_job].iloc[0]
                 opening_id = selected_opening['id']
                 opening_name = selected_opening['name']
                 
-                st.write(f"Retrieving candidates for: {opening_name}")
+                st.write(f"Đang truy xuất ứng viên cho: {opening_name}")
                 candidates_df = get_candidates_for_opening(opening_id, api_key, start_date, end_date)
                 
                 if not candidates_df.empty and 'id' in candidates_df.columns:
                     candidates_df['job'] = opening_name
                     all_candidates.append(candidates_df)
         
-        # Combine all candidates into a single DataFrame
+        # Kết hợp tất cả ứng viên vào một DataFrame
         if all_candidates:
-            # Concatenate all candidate dataframes
+            # Nối tất cả dataframe ứng viên
             combined_df = pd.concat(all_candidates, ignore_index=True)
             
-            # Process the form data and CVs
+            # Xử lý dữ liệu biểu mẫu và CV
             processed_df = process_form_data(combined_df)
             processed_df = process_cvs_data(processed_df)
             
-            # Filter candidates that have reviews
+            # Lọc ứng viên có đánh giá
             final_df = processed_df[processed_df['review'].notna()]
             
             if not final_df.empty:
-                # Show statistics
-                st.subheader("Candidate Statistics")
-                stats = final_df.groupby('job').size().reset_index(name='candidate_count')
+                # Hiển thị thống kê
+                st.subheader("Thống kê ứng viên")
+                stats = final_df.groupby('job').size().reset_index(name='số_lượng_ứng_viên')
                 st.dataframe(stats)
                 
-                # Display main columns of interest
-                st.subheader("Candidate Data")
+                # Hiển thị các cột chính quan tâm
+                st.subheader("Dữ liệu ứng viên")
                 st.dataframe(final_df)
                 
-                # Download option
+                # Tùy chọn tải xuống
                 csv = final_df.to_csv(index=False, encoding="utf-8-sig")
                 st.download_button(
-                    label="Download data as CSV",
+                    label="Tải dữ liệu dưới dạng CSV",
                     data=csv,
-                    file_name=f"candidate_reviews_{start_date}_{end_date}.csv",
+                    file_name=f"danh_gia_ung_vien_{start_date}_{end_date}.csv",
                     mime="text/csv",
                 )
             else:
-                st.warning("No candidates with reviews found in the selected date range.")
+                st.warning("Không tìm thấy ứng viên nào có đánh giá trong khoảng thời gian đã chọn.")
         else:
-            st.warning("No candidate data available for the selected criteria.")
+            st.warning("Không có dữ liệu ứng viên nào cho tiêu chí đã chọn.")
 else:
-    st.error("Failed to load job openings. Please check your API key and try again.")
+    st.error("Không thể tải vị trí công việc. Vui lòng kiểm tra API key và thử lại.")
 
-# Add some information in the sidebar
-st.sidebar.title("About")
+# Thêm thông tin trong thanh bên
+st.sidebar.title("Giới thiệu")
 st.sidebar.info(
-    "This application collects candidate review data from Base API. "
-    "Select a date range and job position to retrieve candidates that have been reviewed by HR."
+    "Ứng dụng này thu thập dữ liệu đánh giá ứng viên từ Base API. "
+    "Chọn khoảng thời gian và vị trí công việc để truy xuất các ứng viên đã được đánh giá bởi HR."
 )
 st.sidebar.markdown("---")
-st.sidebar.markdown("© 2025 HR Analytics")
