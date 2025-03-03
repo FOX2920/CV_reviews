@@ -197,7 +197,7 @@ if not openings_df.empty:
                 st.subheader("Candidate Data")
                 display_columns = ['id', 'name', 'gender', 'job', 'email', 'phone', 'review']
                 display_columns = [col for col in display_columns if col in final_df.columns]
-                st.dataframe(final_df[display_columns])
+                st.dataframe(final_df)
                 
                 # Download option
                 csv = final_df.to_csv(index=False, encoding="utf-8-sig")
