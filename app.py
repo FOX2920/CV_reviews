@@ -93,7 +93,7 @@ def process_form_data(df):
     
     # Trích xuất dữ liệu biểu mẫu
     form_data_list = df['form']
-    
+    df['CV'] = df['cvs'].apply(lambda x: x[0] if len(x) > 0 else None)
     # Chuyển đổi mỗi hàng trong cột 'form' thành một từ điển
     form_df_list = []
     for form_data in form_data_list:
@@ -105,7 +105,7 @@ def process_form_data(df):
     
     # Tạo DataFrame mới từ danh sách các từ điển
     form_df_transformed = pd.DataFrame(form_df_list)
-    display_columns = ['id', 'name', 'gender', 'job', 'email', 'phone', 'review', 'form']
+    display_columns = ['id', 'name', 'gender', 'job', 'CV', 'email', 'phone', 'review', 'form']
     display_columns = [col for col in display_columns if col in df.columns]
     df = df[display_columns]
     # Kết hợp form_df_transformed với df ban đầu theo chiều ngang
