@@ -248,7 +248,7 @@ if not openings_df.empty:
                     label="Tải dữ liệu dưới dạng CSV",
                     data=csv,
                     file_name=f"danh_gia_ung_vien_{start_date}_{end_date}.csv",
-                    mime="text/csv",
+                    mime="text/csv; charset=utf-8-sig",
                 )
             else:
                 st.warning("Không tìm thấy ứng viên nào có đánh giá trong khoảng thời gian đã chọn.")
