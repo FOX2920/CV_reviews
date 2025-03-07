@@ -105,6 +105,33 @@ def process_form_data(df):
     
     # Tạo DataFrame mới từ danh sách các từ điển
     form_df_transformed = pd.DataFrame(form_df_list)
+    
+    # Tạo bản đồ đổi tên cột
+    column_name_mapping = {
+        'tinh_cach_cua_ban': 'personality',
+        'diem_manh_cua_ban': 'strengths',
+        'diem_yeu_cua_ban': 'weaknesses',
+        'nhung_nguoi_xung_quanh_dong_nghi': 'colleagues_feedback',
+        'ban_rat_mong_muon_duoc_hoc_hoi_c': 'desired_learning',
+        'doi_voi_ban_cong_viec_nao_se_man': 'enjoyable_work',
+        'doi_voi_ban_cong_viec_nao_se_lam': 'disliked_work',
+        'qua_trinh_hoc_tap_ghi_chu_bao_go': 'education_history',
+        'cac_bang_cap_khoa_huan_luyen_va_': 'certifications',
+        'muc_luong_de_nghi': 'requested_salary',
+        'thoi_gian_bat_dau_lam_viec': 'start_date',
+        'vui_long_cho_biet_vi_sao_ban_qua': 'application_reason',
+        'muc_luong_gan_nhat': 'latest_salary',
+        'ben_canh_nhung_thong_tin_trong_c': 'additional_info',
+        'muc_luong_mong_muon': 'expected_salary',
+        'cap_bac_mong_muon': 'expected_position',
+        'cong_ty_gan_day_nhat': 'latest_company',
+        'tinh_trang_hon_nhan': 'marital_status'
+    }
+    
+    # Đổi tên cột nếu cột tồn tại trong DataFrame
+    form_df_transformed = form_df_transformed.rename(columns={col: column_name_mapping.get(col, col) 
+                                                   for col in form_df_transformed.columns})
+    
     display_columns = ['id', 'name', 'gender', 'job', 'CV', 'email', 'phone', 'review', 'form']
     display_columns = [col for col in display_columns if col in df.columns]
     df = df[display_columns]
