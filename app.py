@@ -243,12 +243,12 @@ if not openings_df.empty:
                 st.dataframe(final_df)
                 
                 # Tùy chọn tải xuống
-                csv = final_df.to_csv(index=False, encoding="utf-8-sig")
+                csv = final_df.to_csv(index=False).encode("utf-8-sig")
                 st.download_button(
                     label="Tải dữ liệu dưới dạng CSV",
                     data=csv,
                     file_name=f"danh_gia_ung_vien_{start_date}_{end_date}.csv",
-                    mime="text/csv; charset=utf-8-sig",
+                    mime="text/csv"
                 )
             else:
                 st.warning("Không tìm thấy ứng viên nào có đánh giá trong khoảng thời gian đã chọn.")
