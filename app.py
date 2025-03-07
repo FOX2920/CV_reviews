@@ -227,6 +227,10 @@ if not openings_df.empty:
             else:
                 final_df = processed_df  # Giữ tất cả
 
+            # Loại bỏ các cột không có bất kỳ dữ liệu nào hoặc chỉ chứa giá trị rỗng
+            final_df = final_df.dropna(axis=1, how='all')  # Xóa cột nếu tất cả giá trị đều là NaN
+            final_df = final_df.loc[:, (final_df != "").any(axis=0)]  # Xóa cột nếu tất cả giá trị đều là ""
+
             
             if not final_df.empty:
                 # Hiển thị thống kê
