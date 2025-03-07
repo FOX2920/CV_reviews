@@ -170,6 +170,11 @@ if not openings_df.empty:
     
     # Lựa chọn công việc
     selected_job = st.selectbox("Chọn vị trí công việc", job_options)
+    # Lựa chọn hiển thị ứng viên
+    filter_option = st.selectbox(
+        "Lọc ứng viên theo đánh giá:",
+        ["Chỉ ứng viên có review", "Chỉ ứng viên không có review", "Tất cả ứng viên"]
+    )
     
     if st.button("Thu thập dữ liệu"):
         all_candidates = []
@@ -214,12 +219,6 @@ if not openings_df.empty:
             processed_df = process_cvs_data(processed_df)
             
             # Lọc ứng viên có đánh giá
-            # Lựa chọn hiển thị ứng viên
-            filter_option = st.selectbox(
-                "Lọc ứng viên theo đánh giá:",
-                ["Chỉ ứng viên có review", "Chỉ ứng viên không có review", "Tất cả ứng viên"]
-            )
-            
             # Áp dụng bộ lọc dựa trên lựa chọn của người dùng
             if filter_option == "Chỉ ứng viên có review":
                 final_df = processed_df[processed_df['review'].notna()]
